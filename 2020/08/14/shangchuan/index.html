@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="绕过白名单检查实现文件上传\1.  文件上传漏洞简介    通常web站点会有用户注册功能，而当用户登录之后大多数情况下会存在类似头像上传、附件上传之类的功能，这些功能点往往存在上传验证方式不严格的安全缺陷，导致攻击者通过各种手段绕过验证，上传非法文件，这是在web渗透中非常关键的突破口。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="shangchuan">
+<meta property="og:url" content="http://yoursite.com/2020/08/14/shangchuan/index.html">
+<meta property="og:site_name" content="寒岁一醉">
+<meta property="og:description" content="绕过白名单检查实现文件上传\1.  文件上传漏洞简介    通常web站点会有用户注册功能，而当用户登录之后大多数情况下会存在类似头像上传、附件上传之类的功能，这些功能点往往存在上传验证方式不严格的安全缺陷，导致攻击者通过各种手段绕过验证，上传非法文件，这是在web渗透中非常关键的突破口。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/4d222065-5fdb-4951-a3bd-8bd913f15347.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/451c9ed8-e93f-486d-be90-da7042931d6a.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/a37bb32c-b83a-422f-a91e-0267c269f359.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/5133f5fb-02a7-4d15-b58c-7533b588094c.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/c81881d8-89cf-4209-9634-6013f77130d2.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/dea2539e-f14b-475c-b7c7-98ccf1c7afa0.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/663ae87d-d503-4e65-b7a1-0f4a781db7c8.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/b5ee242f-40ab-4e3e-80cb-4ca27d0ff3f9.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/89b9ae08-07bf-4360-a39a-f10ae8e21625.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/ce1228ad-ccfc-4804-96ce-286896468f8e.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/9de38a44-ce9d-4f9f-ad7d-d4c2a9e16c13.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/bbb172d2-ff74-4691-bd53-aab134ec80b0.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/00045a1c-83e0-4b05-9c6f-7d460f0c3492.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/964eb435-9b1d-44c4-a389-8cee1aa5eecd.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/07ea1c32-cf96-42e9-93e0-972d67d957a4.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/f45c28b0-8383-4aa3-aa4c-4f1d0f759491.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/36b929f2-102c-43c1-ae2f-82c9e293dd56.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/74f09467-df5b-4879-a335-6d0567f54634.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/47236e2f-b8d0-4e57-80a6-5cd7b6ea0f9c.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/978b22f4-4cba-4328-a3a2-c28fc621be60.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/c213f924-8e66-4222-8b3d-1890a023747a.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/f3509f4b-d330-4e20-bddf-6ee9f4d7b3fc.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/e812e031-453e-4189-8513-1850b0afa61f.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/14128cea-8412-48e1-8c5f-adab6d363a2a.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/30784e7e-ef71-40cb-861e-e8ded6c83965.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/ed3575c5-8324-4146-b392-cd207bba63ec.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/51a8809e-9004-4f50-8650-c00486139816.png">
+<meta property="og:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/cca35cc1-b785-4968-9995-403069c7c192.png">
+<meta property="article:published_time" content="2020-08-13T16:32:13.000Z">
+<meta property="article:modified_time" content="2020-08-13T16:33:28.317Z">
+<meta property="article:author" content="hackerqdy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/4d222065-5fdb-4951-a3bd-8bd913f15347.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/08/14/shangchuan/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>shangchuan | 寒岁一醉</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a target="_blank" rel="noopener" href="https://your-url" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">寒岁一醉</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/14/shangchuan/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="hackerqdy">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="寒岁一醉">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          shangchuan
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-08-14 00:32:13 / 修改时间：00:33:28" itemprop="dateCreated datePublished" datetime="2020-08-14T00:32:13+08:00">2020-08-14</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="绕过白名单检查实现文件上传"><a href="#绕过白名单检查实现文件上传" class="headerlink" title="绕过白名单检查实现文件上传"></a>绕过白名单检查实现文件上传</h1><p>\1.  文件上传漏洞简介</p>
+<p>   通常web站点会有用户注册功能，而当用户登录之后大多数情况下会存在类似头像上传、附件上传之类的功能，这些功能点往往存在上传验证方式不严格的安全缺陷，导致攻击者通过各种手段绕过验证，上传非法文件，这是在web渗透中非常关键的突破口。<a id="more"></a></p>
+<p>\2.  文件上传漏洞危害</p>
+<p>   攻击者绕过上传验证机制上传恶意文件，通过上传的web后门获得整个web业务的控制权，复杂一点的情况是结合web服务器的解析漏洞来获取权限。</p>
+<p>\3.  文件上传检测流程</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/4d222065-5fdb-4951-a3bd-8bd913f15347.png" alt="img"></p>
+<p>   通常一个文件以HTTP协议进行上传时，将以POST请求发送至web服务器，web服务器收到请求并同意后，用户与web服务器将建立连接，并传输数据。</p>
+<p>\4.  常见的MIME类型</p>
+<p>   1）超文本标记语言.html文件的MIME类型为：text/html</p>
+<p>   2）普通文本.txt文件的MIME类型为：text/plain</p>
+<p>   3）PDF文档.pdf的MIME类型为：application/pdf</p>
+<p>   4）MicrosoftWord文件.word的MIME类型为：application/msword</p>
+<p>   5）PNG图像.png的MIME类型为：image/png</p>
+<p>   6）GIF图像.gif的MIME类型为：image/gif</p>
+<p>   7）MPEG文件.mpg、.mpeg的MIME类型为：video/mpeg</p>
+<p>   8）AVI文件.avi的MIME类型为：video/x-msvideo</p>
+<p>\5.  00截断</p>
+<p>   1） 0x00截断</p>
+<p>​    0x00是十六进制表示方法，表示ASCII码为0的字符，在一些函数处理时，会把这个字符当作结束符。</p>
+<p>​     0x00可以用在对文件名的绕过上，具体原理：系统在对文件名进行读取时，如果遇到0x00，就会认为读取已经结束。但要注意是文件的十六进制内容里的00，而不是文件名中的00。也就是说系统是按二进制或十六进制读取文件，遇到ASCII码为0的位置就停止，而这个ASCII码为0的位置在十六进制中是00。</p>
+<p>   总之就是利用ASCII码为0这个特殊字符，让系统认为字符串已经结束。</p>
+<p>   2） %00截断</p>
+<p>​     url发送到服务器后被服务器解码，这时还没有传到验证函数，也就是说验证函数里接收到的不是%00字符，而是%00解码后的内容，即解码成了0x00。总之就是%00被服务器解码为0x00发挥了截断作用。</p>
+<p>   3） 0x0a</p>
+<p>​    0x0a是十六进制表示方法，表示ASCII码为/n的换行字符，具体为换行至下一行行首起始位置。</p>
+<p>实验目的</p>
+<p>通过该实验了解文件上传漏洞的基础知识及如何绕过白名单检测上传恶意文件。</p>
+<p>实验环境</p>
+<p>操作系统：</p>
+<p>Windows10：部署文件上传漏洞环境及漏洞利用；ip：10.1.1.100</p>
+<p>辅助工具：phpStudy、Mozilla Firefox、burpsuite、菜刀</p>
+<p>源码与工具请在实验机内下载使用：<a target="_blank" rel="noopener" href="http://tools.hetianlab.com/tools/T044.zip%EF%BC%88%E5%8C%85%E9%87%8C%E6%9C%89%E8%8F%9C%E5%88%80%EF%BC%8C%E4%B8%BA%E9%81%BF%E5%85%8D%E8%AF%AF%E6%9D%80%E4%B8%8B%E8%BD%BD%E4%B9%8B%E5%89%8D%E5%85%88%E5%85%B3%E9%97%ADdefender%EF%BC%89">http://tools.hetianlab.com/tools/T044.zip（包里有菜刀，为避免误杀下载之前先关闭defender）</a>  </p>
+<p>关闭defender步骤：在桌面搜索栏搜关键字 defender-&gt; 设置-&gt; 实时保护（关闭）即可</p>
+<p><img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/451c9ed8-e93f-486d-be90-da7042931d6a.png" alt="img"></p>
+<p><strong>本次实验采用github开源项目upload-labs靶场，项目地址：<a target="_blank" rel="noopener" href="https://github.com/c0ny1/upload-labs">https://github.com/c0ny1/upload-labs</a></strong></p>
+<p>实验步骤一</p>
+<p><strong>任务描述：通过修改MIME类型，使其符合$_FILES[‘upload_file’][‘type’]的白名单，达到上传恶意文件的目的。</strong></p>
+<p>\1.  Windows机器上下载的源码文件放到phpStudy的WWW目录下，在源码文件里创建一个名为upload的文件夹：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/a37bb32c-b83a-422f-a91e-0267c269f359.png" alt="img"></p>
+<p>   PHP版本切换至5.2.17，开启phpStudy；</p>
+<p>\2.  在桌面写一个简单的一句话木马eval.php：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/5133f5fb-02a7-4d15-b58c-7533b588094c.png" alt="img"></p>
+<p>\3.  浏览器访问<a target="_blank" rel="noopener" href="http://10.1.1.100/upload-labs/index.php%EF%BC%8C%E9%80%89%E6%8B%A9Pass-02%EF%BC%8C%E6%9F%A5%E7%9C%8B%E6%BA%90%E7%A0%81%E5%8F%AF%E4%BB%A5%E5%8F%91%E7%8E%B0%E6%98%AF%E7%99%BD%E5%90%8D%E5%8D%95%E5%88%A4%E6%96%AD%EF%BC%8C%E5%8F%AA%E5%85%81%E8%AE%B8%E4%B8%8A%E4%BC%A0$_FILES[&#39;upload_file&#39;][&#39;type&#39;]%E4%B8%BA&#39;image/jpeg&#39;%E3%80%81&#39;image/png&#39;%E5%8F%8A&#39;image/gif&#39;%E7%9A%84%E6%96%87%E4%BB%B6%E3%80%82">http://10.1.1.100/upload-labs/index.php，选择Pass-02，查看源码可以发现是白名单判断，只允许上传$_FILES[&#39;upload_file&#39;][&#39;type&#39;]为&#39;image/jpeg&#39;、&#39;image/png&#39;及&#39;image/gif&#39;的文件。</a></p>
+<p>\4.  上传eval.php并用burpsuite抓包：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/c81881d8-89cf-4209-9634-6013f77130d2.png" alt="img"></p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/dea2539e-f14b-475c-b7c7-98ccf1c7afa0.png" alt="img"></p>
+<p>   此时的MIME类型为application/octet-stream</p>
+<p>\5.  修改Content-Type为image/gif，点击‘go’之后在Response处查看响应内容：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/663ae87d-d503-4e65-b7a1-0f4a781db7c8.png" alt="img"></p>
+<p>   成功上传木马文件到upload文件夹。</p>
+<p>实验步骤二</p>
+<p><strong>任务描述：$img_path直接拼接，利用%00截断进行绕过，上传恶意文件并通过浏览器连接webshell。</strong></p>
+<p>\1.  选择Pass-11，点击右上方‘显示源码’，根据源码提示进行文件上传：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/b5ee242f-40ab-4e3e-80cb-4ca27d0ff3f9.png" alt="img"></p>
+<p>​    <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/89b9ae08-07bf-4360-a39a-f10ae8e21625.png" alt="img"></p>
+<p>   可以看到是白名单判断，但是$img_path直接对上传的文件名拼接，使用$_GET传参，我们可以利用%00截断进行绕过。</p>
+<p>   注：%00截断的条件：</p>
+<p>   1）PHP版本小于5.3.4；</p>
+<p>   2）打开PHP的配置文件php-ini，将magic_quotes_gpc设置为Off。</p>
+<p>\2.  桌面写一个test.jpg文件：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/ce1228ad-ccfc-4804-96ce-286896468f8e.png" alt="img"></p>
+<p>\3. Windows中修改PHP配置文件php.ini：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/9de38a44-ce9d-4f9f-ad7d-d4c2a9e16c13.png" alt="img"></p>
+<p>   保存后重启phpStudy。</p>
+<p>\4.  上传test.jpg并使用burpsuite抓包，save_path改为../upload/test.php%00：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/bbb172d2-ff74-4691-bd53-aab134ec80b0.png" alt="img"></p>
+<p>\5.  点击‘go’之后查看响应内容，最后保存下来的文件会是test.php：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/00045a1c-83e0-4b05-9c6f-7d460f0c3492.png" alt="img"></p>
+<p>\6.  Firefox浏览器连接webshell：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/964eb435-9b1d-44c4-a389-8cee1aa5eecd.png" alt="img"></p>
+<p>   连接成功。</p>
+<p>实验步骤三</p>
+<p><strong>任务描述：0x00截断绕过，利用burpsuite的hex功能将save_path改成../upload/test.php[二进制00]形式，上传恶意文件并通过菜刀浏览器连接webshell。</strong></p>
+<p>\1.  选择Pass-12，通过源码提示进行文件上传：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/07ea1c32-cf96-42e9-93e0-972d67d957a4.png" alt="img"></p>
+<p>   和Pass-11不同的是，’save_path’是通过post传进来的，需要在二进制文件中进行修改，因为post不会像get那样对%00进行自动解码。</p>
+<p>\2.  上传test.jpg并使用burpsuite抓包，利用burpsuite的hex功能将save_path改成../upload/test.php[二进制00]形式：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/f45c28b0-8383-4aa3-aa4c-4f1d0f759491.png" alt="img"></p>
+<p>   在../upload/后添加test.php （.php后面加空格），filename不用修改，然后点击‘Hex’：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/36b929f2-102c-43c1-ae2f-82c9e293dd56.png" alt="img"></p>
+<p>   预备知识里说到了0x0a是十六进制表示方法，表示ASCII码为/n的换行字符，具体为换行至下一行行首起始位置；而0x0d表示ASCII码为/r的回车字符，回车的作用只是移动光标至该行的起始位置。</p>
+<p>\3.  将0d前面的20改为00，然后点击‘go’查看响应内容：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/74f09467-df5b-4879-a335-6d0567f54634.png" alt="img"></p>
+<p>   最终上传的是test.php文件。</p>
+<p>\4.  使用菜刀连接webshell：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/47236e2f-b8d0-4e57-80a6-5cd7b6ea0f9c.png" alt="img"></p>
+<p>   点这个‘+’号；</p>
+<p>   输入webshell地址<a target="_blank" rel="noopener" href="http://10.1.1.100/upload-labs/upload/test.php%EF%BC%9A">http://10.1.1.100/upload-labs/upload/test.php：</a></p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/978b22f4-4cba-4328-a3a2-c28fc621be60.png" alt="img"></p>
+<p>   在后面的post数据输入框里输入：test=phpinfo();</p>
+<p>​    <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/c213f924-8e66-4222-8b3d-1890a023747a.png" alt="img"></p>
+<p>   点击post数据输入框后面的提交键，即可连接webshell：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/f3509f4b-d330-4e20-bddf-6ee9f4d7b3fc.png" alt="img"></p>
+<p>实验步骤四</p>
+<p><strong>任务描述：本关考察CVE-2015-2348，move_uploaded_file() 00截断，上传webshell同时自定义保存名称，上传成功后用菜刀连接。</strong></p>
+<p>\1.  选择Pass-19，点击右上方‘显示源码’，根据源码提示进行文件上传：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/e812e031-453e-4189-8513-1850b0afa61f.png" alt="img"></p>
+<p>   发现move_uploaded_file()函数中的$img_path是由post参数save_name控制的，可以在save_name中利用00截断进行绕过。</p>
+<p>\2.  上传test.jpg并使用burpsuite抓包：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/14128cea-8412-48e1-8c5f-adab6d363a2a.png" alt="img"></p>
+<p>   保存名称修改为‘test.php+空格.1.jpg’，点击‘上传’；</p>
+<p>\3.  在‘Hex’中将20（表示php后的那个空格）改为00，然后点击‘go’查看响应内容：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/30784e7e-ef71-40cb-861e-e8ded6c83965.png" alt="img"></p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/ed3575c5-8324-4146-b392-cd207bba63ec.png" alt="img"></p>
+<p>   最终上传的是test.php文件。</p>
+<p>\4.  通过菜刀连接webshell：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/51a8809e-9004-4f50-8650-c00486139816.png" alt="img"></p>
+<p>   此处的‘test’即为@eval($_POST[‘test’]);中的‘test’，脚本类型选择‘PHP’，点击‘添加’：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/cca35cc1-b785-4968-9995-403069c7c192.png" alt="img"></p>
+<p>   菜刀连接webshell成功。</p>
+<p>漏洞修复</p>
+<p>\1. 将上传的目录设置为不可执行；</p>
+<p>\2. 判断文件类型：结合MIME Type、后缀检查等方式，推荐文件类型检查使用白名单的方式；</p>
+<p>\3. 使用随机数改写文件名和文件路径。</p>
+<p>实验报告要求</p>
+<p>参考实验原理与相关介绍，完成实验任务，并对实验结果进行分析，完成思考题目，总结实验的心得体会，并提出实验的改进意见。</p>
+<p>分析与思考</p>
+<p>1）文件上传漏洞在实际环境中如何利用？</p>
+<p>2）文件上传漏洞还有哪些绕过姿势？</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/14/caidao/" rel="prev" title="caidao">
+      <i class="fa fa-chevron-left"></i> caidao
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/14/xxe/" rel="next" title="xxe">
+      xxe <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  <div>
+
+  <div>
+
+    <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+
+</div>
+
+
+  </div>
+
+
+
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%95%E8%BF%87%E7%99%BD%E5%90%8D%E5%8D%95%E6%A3%80%E6%9F%A5%E5%AE%9E%E7%8E%B0%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0"><span class="nav-number">1.</span> <span class="nav-text">绕过白名单检查实现文件上传</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="hackerqdy"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">hackerqdy</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:763859419@qq.com" title="E-Mail → mailto:763859419@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">hackerqdy</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+    <script defer src="/lib/three/canvas_lines.min.js"></script>
+    <script defer src="/lib/three/canvas_sphere.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/miku.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true}});</script></body>
+</html>
+
+<!-- 页面点击小红心 --> 
+<script type="text/javascript" src="/js/src/love.js"></script>
