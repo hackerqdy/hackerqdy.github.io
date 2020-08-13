@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="渗透测试面试问题合集一、思路流程1、信息收集a、服务器的相关信息（真实ip，系统类型，版本，开放端口，WAF等） b、网站指纹识别（包括，cms，cdn，证书等），dns记录 c、whois信息，姓名，备案，邮箱，电话反查（邮箱丢社工库，社工准备等） e、子域名收集，旁站，C段等 f、google hacking针对化搜索，pdf文件，中间件版本，弱口令扫描等 g、扫描网站目录结构，爆后台，网站b">
+  <meta name="description" content="渗透测试面试问题合集一、思路流程1、信息收集a、服务器的相关信息（真实ip，系统类型，版本，开放端口，WAF等） b、网站指纹识别（包括，cms，cdn，证书等），dns记录 c、whois信息，姓名，备案，邮箱，电话反查（邮箱丢社工库，社工准备等）">
 <meta property="og:type" content="article">
 <meta property="og:title" content="渗透测试面试问题合集">
 <meta property="og:url" content="http://yoursite.com/2020/08/08/mianshi/index.html">
 <meta property="og:site_name" content="寒岁一醉">
-<meta property="og:description" content="渗透测试面试问题合集一、思路流程1、信息收集a、服务器的相关信息（真实ip，系统类型，版本，开放端口，WAF等） b、网站指纹识别（包括，cms，cdn，证书等），dns记录 c、whois信息，姓名，备案，邮箱，电话反查（邮箱丢社工库，社工准备等） e、子域名收集，旁站，C段等 f、google hacking针对化搜索，pdf文件，中间件版本，弱口令扫描等 g、扫描网站目录结构，爆后台，网站b">
+<meta property="og:description" content="渗透测试面试问题合集一、思路流程1、信息收集a、服务器的相关信息（真实ip，系统类型，版本，开放端口，WAF等） b、网站指纹识别（包括，cms，cdn，证书等），dns记录 c、whois信息，姓名，备案，邮箱，电话反查（邮箱丢社工库，社工准备等）">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2020-08-08T04:28:18.000Z">
-<meta property="article:modified_time" content="2020-08-08T18:39:12.092Z">
+<meta property="article:modified_time" content="2020-08-13T16:42:43.823Z">
 <meta property="article:author" content="hackerqdy">
 <meta name="twitter:card" content="summary">
 
@@ -219,7 +219,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-08-09 02:39:12" itemprop="dateModified" datetime="2020-08-09T02:39:12+08:00">2020-08-09</time>
+                <time title="修改时间：2020-08-14 00:42:43" itemprop="dateModified" datetime="2020-08-14T00:42:43+08:00">2020-08-14</time>
               </span>
 
           
@@ -236,12 +236,12 @@
         <h1 id="渗透测试面试问题合集"><a href="#渗透测试面试问题合集" class="headerlink" title="渗透测试面试问题合集"></a>渗透测试面试问题合集</h1><h2 id="一、思路流程"><a href="#一、思路流程" class="headerlink" title="一、思路流程"></a>一、思路流程</h2><h3 id="1、信息收集"><a href="#1、信息收集" class="headerlink" title="1、信息收集"></a>1、信息收集</h3><p>a、服务器的相关信息（真实ip，系统类型，版本，开放端口，WAF等）</p>
 <p>b、网站指纹识别（包括，cms，cdn，证书等），dns记录</p>
 <p>c、whois信息，姓名，备案，邮箱，电话反查（邮箱丢社工库，社工准备等）</p>
+<a id="more"></a>
+
 <p>e、子域名收集，旁站，C段等</p>
 <p>f、google hacking针对化搜索，pdf文件，中间件版本，弱口令扫描等</p>
 <p>g、扫描网站目录结构，爆后台，网站banner，测试文件，备份等敏感文件泄漏等</p>
 <p>h、传输协议，通用漏洞，exp，github源码等</p>
-<a id="more"></a>
-
 <h3 id="2、漏洞挖掘"><a href="#2、漏洞挖掘" class="headerlink" title="2、漏洞挖掘"></a>2、漏洞挖掘</h3><p>a、浏览网站，看看网站规模，功能，特点等</p>
 <p>b、端口，弱口令，目录等扫描,对响应的端口进行漏洞探测，比如 rsync,心zang出血，mysql,ftp,ssh弱口令等。</p>
 <p>c、XSS，SQL注入，上传，命令注入，CSRF，cookie安全检测，敏感信息，通信数据传输，暴力破解，任意文件上传，越权访问，未授权访问，目录遍历，文件 包含，重放攻击（短信轰炸），服务器漏洞检测，最后使用漏扫工具等</p>
@@ -572,8 +572,8 @@
       <i class="fa fa-chevron-left"></i> sql注入分享小结
     </a></div>
       <div class="post-nav-item">
-    <a href="/2020/08/14/caidao/" rel="next" title="caidao">
-      caidao <i class="fa fa-chevron-right"></i>
+    <a href="/2020/08/14/caidao/" rel="next" title="全面分析中国菜刀及隐藏后门">
+      全面分析中国菜刀及隐藏后门 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
