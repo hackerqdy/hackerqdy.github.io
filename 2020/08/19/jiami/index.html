@@ -20,28 +20,35 @@
     var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="寒岁一醉">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="1    什么是WebLogicWebLogic是美国bea公司出品的一个webserver，如同我们使用的IIS，APACHE，确且的说是一个基于j2ee**架构**的中间件，webserver是用来构建网站的必要软件用来解析发布网页等功能，它是用纯Java开发的。目前WebLogic在世界webserver市场上占有最大的份额，其他还有像IBM的websphere，免费的tomcat、resi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于WebLogic安全性探讨">
+<meta property="og:url" content="http://yoursite.com/2020/08/19/jiami/index.html">
 <meta property="og:site_name" content="寒岁一醉">
+<meta property="og:description" content="1    什么是WebLogicWebLogic是美国bea公司出品的一个webserver，如同我们使用的IIS，APACHE，确且的说是一个基于j2ee**架构**的中间件，webserver是用来构建网站的必要软件用来解析发布网页等功能，它是用纯Java开发的。目前WebLogic在世界webserver市场上占有最大的份额，其他还有像IBM的websphere，免费的tomcat、resi">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.3001.net/images/20190331/1554005314_5ca03d42934f0.png!small">
+<meta property="og:image" content="https://image.3001.net/images/20190331/1554005324_5ca03d4c0ca82.png!small">
+<meta property="article:published_time" content="2020-08-19T08:56:16.000Z">
+<meta property="article:modified_time" content="2020-08-19T08:57:19.957Z">
 <meta property="article:author" content="hackerqdy">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.3001.net/images/20190331/1554005314_5ca03d42934f0.png!small">
 
-<link rel="canonical" href="http://yoursite.com/">
+<link rel="canonical" href="http://yoursite.com/2020/08/19/jiami/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>寒岁一醉</title>
+  <title>关于WebLogic安全性探讨 | 寒岁一醉</title>
   
 
 
@@ -178,9 +185,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -196,10 +204,9 @@
       <meta itemprop="name" content="寒岁一醉">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/19/jiami/" class="post-title-link" itemprop="url">关于WebLogic安全性探讨</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          关于WebLogic安全性探讨
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -223,7 +230,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="1-什么是WebLogic"><a href="#1-什么是WebLogic" class="headerlink" title="1    什么是WebLogic"></a>1    什么是WebLogic</h2><p>WebLogic是美国bea公司出品的一个webserver，如同我们使用的IIS，APACHE，确且的说是一个基于j2ee**<a target="_blank" rel="noopener" href="http://lib.csdn.net/base/architecture">架构</a>**的中间件，webserver是用来构建网站的必要软件用来解析发布网页等功能，它是用纯<a target="_blank" rel="noopener" href="http://lib.csdn.net/base/java"><strong>Java</strong></a>开发的。目前WebLogic在世界webserver市场上占有最大的份额，其他还有像IBM的websphere，免费的tomcat、resin等webserver软件。</p>
+        <h2 id="1-什么是WebLogic"><a href="#1-什么是WebLogic" class="headerlink" title="1    什么是WebLogic"></a>1    什么是WebLogic</h2><p>WebLogic是美国bea公司出品的一个webserver，如同我们使用的IIS，APACHE，确且的说是一个基于j2ee**<a target="_blank" rel="noopener" href="http://lib.csdn.net/base/architecture">架构</a>**的中间件，webserver是用来构建网站的必要软件用来解析发布网页等功能，它是用纯<a target="_blank" rel="noopener" href="http://lib.csdn.net/base/java"><strong>Java</strong></a>开发的。目前WebLogic在世界webserver市场上占有最大的份额，其他还有像IBM的websphere，免费的tomcat、resin等webserver软件。</p>
 <p>WebLogic对于整日游走于安全行业的人来说并不陌生，网站拥有者可利用WebLogic搭建web服务，可充分利用其扩展性、部署灵活、支持多种标准等优势来；所谓没有绝对的安全，所以作为成熟的产品WebLogic每年也会出现各种命令执行、反序列等通用漏洞，而做为攻击者就可充分利用这些漏洞去攻击系统危害用户利益。</p>
 <p>WebLogic在世界排名前10的国家如下：</p>
 <p><img src="https://image.3001.net/images/20190331/1554005314_5ca03d42934f0.png!small" alt="图片.png"></p>
@@ -303,164 +310,27 @@
 <p>Ø 部署waf等安全措施，可以在一定程度上减轻该漏洞的危害；</p>
 <p>Ø 如果业务不需要UDDI功能，就关闭这个功能可以删除uddiexporer文件夹；</p>
 
-      
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-  <div>
-
-  </div>
-
-
-
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/14/xxe/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="hackerqdy">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="寒岁一醉">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/14/xxe/" class="post-title-link" itemprop="url">XML外部实体注入漏洞</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2020-08-14 00:34:49 / 修改时间：00:42:16" itemprop="dateCreated datePublished" datetime="2020-08-14T00:34:49+08:00">2020-08-14</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ol>
-<li><h5 id="什么是XML"><a href="#什么是XML" class="headerlink" title="什么是XML"></a>什么是XML</h5><p>xml： eXtensibleMarkup Language,可扩展标记语言，使用简单的标记来描述数据。</p>
-<p>xml是一种非常灵活的语言，类似于HTML语言，但是并没有固定的标签，所有的标签都可以自定义，其设计的宗旨是传输数据，而不是像HTML一样显示数据。
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/08/14/xxe/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-  <div>
-
-  </div>
 
 
-
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/14/shangchuan/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="hackerqdy">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="寒岁一醉">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/14/shangchuan/" class="post-title-link" itemprop="url">绕过白名单检查实现文件上传</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2020-08-14 00:32:13 / 修改时间：00:41:43" itemprop="dateCreated datePublished" datetime="2020-08-14T00:32:13+08:00">2020-08-14</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ol>
-<li><h5 id="文件上传漏洞简介"><a href="#文件上传漏洞简介" class="headerlink" title="文件上传漏洞简介"></a>文件上传漏洞简介</h5><p>通常web站点会有用户注册功能，而当用户登录之后大多数情况下会存在类似头像上传、附件上传之类的功能，这些功能点往往存在上传验证方式不严格的安全缺陷，导致攻击者通过各种手段绕过验证，上传非法文件，这是在web渗透中非常关键的突破口。
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/08/14/shangchuan/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/14/xxe/" rel="prev" title="XML外部实体注入漏洞">
+      <i class="fa fa-chevron-left"></i> XML外部实体注入漏洞
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
@@ -468,247 +338,17 @@
 
   <div>
 
-  </div>
-
-
-
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/14/caidao/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="hackerqdy">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="寒岁一醉">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/14/caidao/" class="post-title-link" itemprop="url">全面分析中国菜刀及隐藏后门</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2020-08-14 00:27:26 / 修改时间：00:39:33" itemprop="dateCreated datePublished" datetime="2020-08-14T00:27:26+08:00">2020-08-14</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><strong>中国菜刀</strong></p>
-<p> 中国菜刀是一款专业的网站管理软件，用途广泛，使用方便，小巧实用。只要支持动态脚本的网站，都可以用中国菜刀来进行管理！在非简体中文环境下使用，自动切换到英文界面。UINCODE方式编译，支持多国语言输入显示</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/08/14/caidao/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   <div>
 
-  </div>
+    <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
 
+</div>
 
-
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/08/mianshi/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="hackerqdy">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="寒岁一醉">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/08/mianshi/" class="post-title-link" itemprop="url">渗透测试面试问题合集</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-08-08 12:28:18" itemprop="dateCreated datePublished" datetime="2020-08-08T12:28:18+08:00">2020-08-08</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-08-14 00:42:43" itemprop="dateModified" datetime="2020-08-14T00:42:43+08:00">2020-08-14</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="渗透测试面试问题合集"><a href="#渗透测试面试问题合集" class="headerlink" title="渗透测试面试问题合集"></a>渗透测试面试问题合集</h1><h2 id="一、思路流程"><a href="#一、思路流程" class="headerlink" title="一、思路流程"></a>一、思路流程</h2><h3 id="1、信息收集"><a href="#1、信息收集" class="headerlink" title="1、信息收集"></a>1、信息收集</h3><p>a、服务器的相关信息（真实ip，系统类型，版本，开放端口，WAF等）</p>
-<p>b、网站指纹识别（包括，cms，cdn，证书等），dns记录</p>
-<p>c、whois信息，姓名，备案，邮箱，电话反查（邮箱丢社工库，社工准备等）</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/08/08/mianshi/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-  <div>
 
   </div>
 
 
 
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/08/sql/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="hackerqdy">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="寒岁一醉">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/08/sql/" class="post-title-link" itemprop="url">sql注入分享小结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-08-08 10:36:35" itemprop="dateCreated datePublished" datetime="2020-08-08T10:36:35+08:00">2020-08-08</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-08-09 02:39:19" itemprop="dateModified" datetime="2020-08-09T02:39:19+08:00">2020-08-09</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="0x00-SQL注入是什么？"><a href="#0x00-SQL注入是什么？" class="headerlink" title="0x00 SQL注入是什么？"></a>0x00 SQL注入是什么？</h2><p>SQL注入通过输入一些恶意的sql语句来修改后台数据库操作语句，执行注入语句已达到对数据库的增删改查（CRUD），甚至于数据库提权等。所以很多书籍或者机构的课程都会花较大篇幅去讲解SQL注入模块，学习SQL注入原理有利于后期的sqlmap以及waf绕过的学习。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/08/08/sql/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-  <div>
-
-  </div>
-
-
-
-
-
-  
 
 
 
@@ -760,6 +400,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AFWebLogic"><span class="nav-number">1.</span> <span class="nav-text">1    什么是WebLogic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-WebLogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">2    WebLogic漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-WebLogic%E6%BC%8F%E6%B4%9E%E7%BB%9F%E8%AE%A1"><span class="nav-number">3.</span> <span class="nav-text">3    WebLogic漏洞统计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83WebLogic%E6%BC%8F%E6%B4%9E"><span class="nav-number">4.</span> <span class="nav-text">4    如何防范WebLogic漏洞</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
