@@ -314,6 +314,197 @@
 ]]></content>
   </entry>
   <entry>
+    <title>XML外部实体注入漏洞</title>
+    <url>/2020/08/14/xxe/</url>
+    <content><![CDATA[<ol>
+<li><h5 id="什么是XML"><a href="#什么是XML" class="headerlink" title="什么是XML"></a>什么是XML</h5><p>xml： eXtensibleMarkup Language,可扩展标记语言，使用简单的标记来描述数据。</p>
+<p>xml是一种非常灵活的语言，类似于HTML语言，但是并没有固定的标签，所有的标签都可以自定义，其设计的宗旨是传输数据，而不是像HTML一样显示数据。<a id="more"></a></p>
+</li>
+</ol>
+<p>   xml不会做任何事情，它是被设计用来结构化、存储以及传输信息，也就是xml文件所携带的信息，需要被其他的语言或者程序来解析，才能发挥作用。</p>
+<p>\2.  XML的用处</p>
+<p>   通常，xml被用于信息的记录和传递(比如，数据库的导出导入会很麻烦，但是xml会很方便)，也会被用于充当配置文件。也会被应用于Web 开发的许多方面，常用于简化数据的存储和共享。如：</p>
+<p>   XML 把数据从 HTML 分离，更方便在HTML文档中显示动态数据。</p>
+<p>   XML 简化数据共享，XML数据以纯文本格式进行存储，因此提供了一种独立于软件和硬件的数据存储方法。这让创建不同应用程序可以共享的数据变得更加容易。</p>
+<p>   XML 简化数据传输，由于可以通过各种不兼容的应用程序来读取数据，以 XML 交换数据降低了不兼容系统之间交换书据的复杂性。</p>
+<p>   XML 简化平台变更，使用XML存储一些不兼容的数据，可以在系统或软件升级，转换大量的数据时，避免数据的丢失。</p>
+<p>   XML 使您的数据更有用，XML可以使不同的应用程序都能够访问您的数据，使得数据的用途更广。</p>
+<p>   XML 用于创建新的互联网语言，如XHTML、WSDL、WAP 和 WML、RSS 、RDF 和 OWL等</p>
+<p>\3.  什么是XML注入</p>
+<p>   XML与HTML一样，也存在注入漏洞。比如：一个 web 应用，在进行用户注册时，选择以 xml 来存储数据到 xmldb 数据库中，当用户填写用户名，密码和邮箱时，后台存储的文件格式及内容如下：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/7f2cef17-3494-4a3a-828c-64159c035811.png" alt="img"></p>
+<p>   那么攻击者就可以在注册的时候构造恶意的数据，假设他在用户名与密码的输入框中输入正常的文本，在最后的邮箱输入框中输入如下内容：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/08894e79-3fec-4d93-9e18-9a0c290dd8e3.png" alt="img"></p>
+<p>   那么就会多注册一个名为admin的用户。</p>
+<p>   综合上面的小例子，我们可以知道,能够进行XML注入攻击的前提是，用户能够控制数据的输入，程序没有对输入的内容进行过滤且拼接了数据。那么相应的，破坏掉其中一个前提就可以进行防御了，既然我们无法限制用户的输入，那么就可以对数据进行过滤，将XML语言本身的“保留字符”进行过滤或者转义即可。</p>
+<p>\4.  什么是XXE注入漏洞：</p>
+<p>   XXE注入也是XML注入的一部分，但相较于普通的XML注入，XXE注入的攻击面更广，危害更大。</p>
+<p>   XXE注入(XML External Entity Injection) 全称为 XML 外部实体注入，从名字就能看出来，所注入的对象就是我们实验任务一中提到的重点： XML外部实体。当遇见能够解析XML内容的页面时，如果能注入外部实体并且成功解析的话，这就会大大拓宽我们 XML 注入的攻击面。</p>
+<p>   XXE的攻击形式主要分为：带内数据实体注入、基于错误的实体注入和带外数据实体注入</p>
+<p>   带内数据实体注入：in-band ,XML解析后的数据会直接显示在屏幕上</p>
+<p>   基于错误：error-based，解析结果只有一大堆的错误</p>
+<p>   带外数据：out-of-band，也叫XXE盲注，注入的XML解析后无任何输出响应，必须执行一些带外请求把数据提取出来。</p>
+<p>\5.  XXE注入能做什么：</p>
+<p>   a. 任意文件读（<strong>本实验重点</strong>）</p>
+<p>   b. SSRF，服务端请求伪造，借助漏洞实现内网探测，</p>
+<p>   c. DOS攻击</p>
+<p>   d. 远程命令执行</p>
+<p>\6.  PHP的XXE注入产生的条件：</p>
+<p>   a. Libxml的版本尽可能的低，libxml是PHP的xml解析库，因为从2.8.0版本开始，libxml默认是不加载外部实体的，如果要使用较高版本的libxml的话，需要在编写代码的时候对参数做设置。</p>
+<p>   b. 目标主机没有禁用外部实体的引用。</p>
+<p>   c. 用户可以控制xml的输入内容</p>
+<p>实验目的</p>
+<p>XML注入是web应用中常见的一种漏洞，尤其是XXE注入（XML外部实体注入）漏洞所造成的危害也是很严重的。通过本实验，了解在PHP的web应用程序中，XXE注入漏洞形成的原理以及利用形式、利用方法等。</p>
+<p>实验环境</p>
+<p>服务器：Windows 10 ，IP地址：10.1.1.123</p>
+<p>辅助工具：phpstudy</p>
+<p>实验步骤一</p>
+<p><strong>任务描述：学习XML基础知识。</strong></p>
+<p>1、一个XML示例：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;utf-8&quot;?&gt;</span><br><span class="line">&lt;!--这里是注释--&gt;</span><br><span class="line">&lt;books&gt;</span><br><span class="line">    &lt;book id&#x3D;&quot;b01&quot;&gt;</span><br><span class="line">        &lt;name&gt;Python黑客编程从入门到入狱&lt;&#x2F;name&gt;</span><br><span class="line">        &lt;author&gt;张三&lt;&#x2F;author&gt;</span><br><span class="line">        &lt;price&gt;$20.00&lt;&#x2F;price&gt;</span><br><span class="line">    &lt;&#x2F;book&gt;</span><br><span class="line">&lt;&#x2F;books&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>      如上代码，第一行是XML文档的声明，由“<?xml”开头，以“?>”结尾，其中的内容是对本xml文档所使用的版本 “version”和编码“encoding”的声明，version一般情况下都是1.0，因为目前为止，xml只有这一个版本。      第二行是注释，不多做解释。      从第三行开始，就是XML文档的主要内容了，如代码中所示的“<books>”，是本文档的根元素，“<book>”是“<books>”的子元素，而“<name>、<author>、<price>”也都是子元素，但是是“<book>”的子元素。      那么我们可以将这个XML文档，视为是一个描述图书的文档，它所描述的内容，包括了图书的名字、作者和价格，如果使用程序对这个文档进行解析后，那么这些信息就可以更好的显示在web页面或者是应用程序中，方便用户查看。2、XML的格式      a. 声明信息，用于描述xml的版本及编码格式。<?xml version="1.0" encoding="utf-8" ?>      b. xml有且仅有一个根元素（可以理解为顶级的元素、没有被其他元素包起来的元素）。个人理解：像是数据库的表名      c. xml中大小写敏感      d. 标签是成对出现的，所有元素都必须有一个关闭标签，而且要正确嵌套。      e. 属性值要使用双引号      f. 注释的写法。<!--这是注释 -->      g. 一个格式良好的xml文件<?xml version="1.0" encoding="utf-8"?> <!--这里是注释--> <books>     <book id="b01">         <name>Python黑客编程从入门到入狱</name>         <author>张三</author>         <price>$20.00</price>     </book> </books>      h. XML并不是让用户直接打开的，而是让别的语言来从文件中读取信息的。至于为什么可以直接用浏览器浏览，只是浏览器可以识别而已。3、 XML的属性      虽然XML像HTML一样，也有属性，但是一般不推荐使用属性，如果某个信息看起来很像是数据，那么最好是使用元素来表示它，而不是属性。4、 XML验证      拥有正确语法的 XML 被称为”形式良好”的 XML。而判断XML的语法是否合法，叫做XML验证，是通过 DTD进行验证的。      DTD：Document TypeDefinition 文档类型定义。用于约束xml的文档格式，保证xml是一个有效的xml，DTD分为内部和外部两种。DTD定义在xml文件中视为内部DTD；DTD定义在外部的dtd文件中，视为外部DTD。      说的简单一点，DTD就是对当前的XML文档做一个约束，DTD中定义了这个文档中的根元素是什么，有几个子元素，每个子元素能出现几次，哪些元素有属性，属性的类型是什么，属性的默认值是什么等等，如果后面的XML内容中，与DTD中的定义不符，如元素个数不符、元素名称大小写不符等，那么XML文件解析时就会报错。1）内部DTD的使用：      内部DTD的定义<!DOCTYPE 根元素 [元素声明]>      元素声明语法[ <!ELEMENT 根元素 (子元素)> <!ELEMENT 根元素的子元素 (子元素的子元素，子元素的子元素)> <!ELEMENT 子元素 (数据类型)> <!ELEMENT 子元素 (数据类型)> ]      元素声明中的数量词”+” 表示出现一次或者多次 “?”表示出现0次或多次 “*”表示出现任意次。      属性声明语法<!ATTLIST 元素名称 属性名称  属性类型 默认值>      示例：<?xml version="1.0" encoding="utf-8"?> <!--这里是注释--> <!DOCTYPE books [     <!ELEMENT books (book+)>     <!ELEMENT book (name,author,price)>     <!ATTLIST book id CDATA #REQUIRED>     <!ELEMENT name (#PCDATA)>     <!ELEMENT author (#PCDATA)>     <!ELEMENT price (#PCDATA)>      ]&gt; <books>     <book id="b01">         <name>Python黑客编程从入门到入狱</name>         <author>张三</author>         <price>$20.00</price>     </book> </books>      如上，就是一个内部DTD的引用示例，在DTD定义中，要求根元素books的子元素book出现一次及以上，子元素book又有三个子元素，分别为name，author和price，然后声明了元素book的id属性，其类型是CDATA，并且是必须的（#REQUIRED），最后定义了book的三个子元素的数据类型为#PCDATA，这表示这三个元素标签中的内容必须是文本，并能再出现子标签。2）外部DTD的使用：      首先需要创建一个外部的dtd文件。内容中不需要包括&lt;!DOCTYPE…&gt;，直接&lt;!ELEMENT…&gt;，如下所示：<?xml version="1.0" encoding="utf-8"?> <!ELEMENT books (book+)> <!ELEMENT book (name,author,price)> <!ATTLIST book id CDATA #REQUIRED> <!ELEMENT name (#PCDATA)> <!ELEMENT author (#PCDATA)> <!ELEMENT price (#PCDATA)>      然后在XML文档中引入外部的DTD：<!DOCTYPEbooks SYSTEM "xxx.dtd">      注意外部实体引用时的关键字“SYSTEM”，同时也可以使用“PUBLIC”这个关键字，这两者的区别在于，SYSTEM表示私有的DTD，PUBLIC表示共有的DTD。5、DTD实体（重点学习）      首先，什么是DTD实体，简单点理解，实体就像是变量，可以用于存储数据，以便后续的使用。但它的功能又不仅仅是存储，比如外部实体，除了可以存储数据，还可以从远程文件或远程网络中读取内容或调用数据。至于什么是外部实体，别着急，接着往后看。      从实体被定义的位置来看，实体可以分为内部实体和外部实体，就像内部DTD和外部DTD一样，内部实体，就是在XML文档内部的DTD进行定义的实体，外部实体就是定义在外部DTD文件中然后被引用到当前XML中的实体。1）内部实体声明：      声明语法：<!ENTITY 实体名称 "实体的值">      一个实体的引用，由三部分构成:&amp;符号, 实体名称, 分号。      内部实体引用示例：<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE books [     <!ENTITY test "Hello World"> ]&gt;  <books>&test;</books>       PHP解析示例代码：            使用浏览器进行访问，并将xml代码作为参数传入，可以不复制xml声明，记得要将引用实体时的“&amp;”手动编码为“&amp;”（因为我们这里使用的是GET传参的方式，所以传入的内容会被进行URL编码，但是&amp;在URL中被认为是两个参数的分隔符，所以如果我们不对其进行URL编码转换，浏览器会把它当作参数的分隔符来处理）：      2）外部实体声明：      声明语法：<!ENTITY  实体名称 SYSTEM "URI/URL" >      声明一个外部实体的关键在于“SYSTEM”这个关键字。SYSTEM在此意图让xml解析器知道，现在声明的是一个外部实体，需要从后面的外部资源中获取内容并存储在内部实体，如果后面的外部资源的语法，存在特殊符号，那么xml解析器会报错。      外部实体引用可支持http，file等协议，不同的语言支持的协议不同，但存在一些通用的协议，比如http、file、ftp等，具体内容如下所示：                  外部实体引用示例：<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE books [     <!ENTITY xxe SYSTEM "http://localhost/xmltest.txt"> ]&gt;  <books>&xxe;</books>      依旧将代码作为参数传入：            另外，从实体的引用方式来区分，实体又可以分为：一般实体、参数实体、预定义实体。      一般实体：General Entities，就是我们上面的示例中的实体，使用&amp;进行引用      预定义实体：PredefinedEntities，就是xml本身对一些特殊字符进行了预定义，方便用户直接引用，比如小于号，如果直接在xml文档中使用小于号，会被xml解析器视为标签，从而引起解析错误。那么此时就需要调用小于号所对应的预定义实体来引用：&amp;#x3C。      参数实体：Parameter Entities，这也是XXE学习中的重点，在XXE利用中经常被使用。3）参数实体      参数实体声明：内部：<!ENTITY % 实体名称 "实体值"> 外部：<!ENTITY % 实体名称 SYSTEM  "URI">      参数实体应注意以下几点：      (1)使用 % 实体名(这里面空格不能少) 在 DTD 中定义，并且只能在 DTD 中使用 “%实体名;” 引用      (2)只有在 DTD 文件中，参数实体的声明才能引用其他实体      (3)和通用实体一样，参数实体也可以外部引用      简单理解呢，就是参数实体不能像普通实体那样在xml文档内容中进行引用，它的引用范围只在当前xml文件的DTD声明中，或者是当前的DTD文件中。      参数实体引用示例：<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE books [     <!ENTITY % xxe "hello">     %xxe;  ]&gt;  <books></books>      那么它的引用效果是什么样的呢？我们拿下面这示例讲解一下：            像上图这样一个xml文档，我们定义了一个参数实体为test，他的值比较特殊，是一句普通实体的声明，然后是使用“%test”进行引用，最后在xml文档内容中使用“&amp;hello”来引用定义的普通实体hello。      那么此文档中实体的定义其实就成为了下图所示的：            所以这个时候，我们直接使用浏览器查看的时候，会是下面的显示：      </p>
+<p>实验步骤二</p>
+<p><strong>任务描述：有回显的本地文件读取。</strong></p>
+<p>   漏洞示例代码：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/1eee747b-b70b-46e5-98d7-5980ae71014f.png" alt="img"></p>
+<p>   测试payload：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/5ef5ec0a-2adb-4a9f-8af6-b3131204bafe.png" alt="img"></p>
+<p>   在浏览器中设置代理，打开burpsuite访问存在漏洞的页面：“xxetest.php”，并抓包，然后发送到Repeater中，构造请求包：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/62d3bd12-eefa-4b0c-9157-2e3e21f9c8a9.png" alt="img"></p>
+<p>   这样我们就读取到了windows系统的system.ini的文件内容。</p>
+<p>   但是这样也不代表这个payload的就适用于任何情况，比如我们更换一个读取的文件xmltest2.txt，内容是：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/bb5ba17f-5f4c-44ed-8c3d-12ca72690c4b.png" alt="img"></p>
+<p>   我们再使用刚才的payload测试：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/48198e19-ef71-45f6-9026-dc63e706473b.png" alt="img"></p>
+<p>   这个时候就会如上图一样，报很多错误，主要是因为我们要读取的文件内容中存在很多的特殊字符：大于号、小于号等，我们在前面的XML基础巩固中也提到过，当xml的标签内还存在小于号、大于号等特殊字符时，尤其是小于号，会被XML解析器误认为是另一个标签的开始，这样就会造成解析的错误。所以我们的问题是：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/52bacae0-48d7-486d-a49c-09df72c68213.png" alt="img"></p>
+<p>   所以我们就要想办法绕过。这个时候我们就需要了解一下XML CDATA了，我们先看一下w3school中对他的描述：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/09be709a-34bd-4832-a7f9-3f94abd208e9.png" alt="img"></p>
+<p>   其实只用看一个开始，我们就大概知道CDATA的作用了，它可以使得使用其中的数据内容不会被xml解析器解析。然后我们再看其使用方式：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/7c01d25c-9bf6-42f2-b99f-31c4503bbe41.png" alt="img"></p>
+<p>   从w3school给出的例子，我们也大概知道了CDATA的使用方式，但是其还需要注意几点：</p>
+<p>   a. CDATA 部分不能包含字符串 “]]&gt;”。也不允许嵌套的 CDATA 部分，这样会导致异常的闭合，从而使解析器报错。</p>
+<p>   b. 标记 CDATA 部分结尾的 “]]&gt;” 不能包含空格或换行。</p>
+<p>   那么了解了这些，我们就可以尝试使用CDATA再次去读取目标文件的内容，我们首先需要把要读取的到的内容放在CDATA中，但是CDATA并没有提供拼接的方法，所以我们暂且使用普通实体进行拼接尝试（注意是尝试）：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/55dfd86c-a46f-4b65-a34e-dc60e2e1067c.png" alt="img"></p>
+<p>   我们尝试直接使用实体来进行拼接，但是测试失败：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/eba2fc1b-faba-4170-a75b-3eeb6f314848.png" alt="img"></p>
+<p>   这说明我们的拼接方式不可行，我们现在使用的是一般实体，我们在前面的xml基础知识中介绍过了，一般实体的引用是在xml文档内容中，既然在xml文档内容中拼接不可行，那再dtd中拼接可行吗？我们再次进行尝试，既然再dtd中拼接，那就需要用到参数实体了。</p>
+<p>   我们再次尝试构造payload：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/c954ed86-0f20-455b-952d-d3effc5315cb.png" alt="img"></p>
+<p>   理论上，我们完美地将这几个参数实体拼接了起来，并将值赋给了一般实体all，但是遗憾的是，我们的payload还是报错了：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/697e6d68-cfc4-409e-ad82-c3dc3aa1d976.png" alt="img"></p>
+<p>   那么这又是为什么呢？根据XML规范所描述：“在DTD内部子集中的参数实体调用，不能混掺到标记语言中”，这是什么意思呢？就是不能在实际的标记语言中来调用参数实体，像我们这样，就是在标记语言中进行调用：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/34c0d65e-ffa5-4fed-8683-3cd86c03e5dd.png" alt="img"></p>
+<p>   但可以在同级别中被当作标记语言调用，就像是参数实体的引用，就是将调用当成了一个标记语言，像这样：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/b774add3-adcb-40f6-aaca-3ff855c40b12.png" alt="img"></p>
+<p>   也就是我们所构造的payload这种使用方式，不能在内部DTD中被这样使用，但是幸运的是，XML规范还声明了一点：“外部参数实体不受此限制”，这就告诉我们可以使用外部的DTD来构造payload，将我们的CDATA内容拼接起来：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/6a2604c2-cbbe-4f48-95e5-166e1f55a265.png" alt="img"></p>
+<p>   DTD文件的内容：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/7395ec9a-0c90-4e4e-8438-21f6b2fdcf24.png" alt="img"></p>
+<p>   我们再次进行攻击尝试，成功读取到文件内容：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/26fb0f38-26b6-4c06-927a-408344b98a45.png" alt="img"></p>
+<p>   Ps：</p>
+<p>   由于环境资源的关系，我们在进行攻击时，所使用的外部dtd文件，是本地环境的。但是在实际的攻击情况下，这个DTD文件应该是我们自己所掌握的主机的DTD文件，文件的内容是受我们所控的。</p>
+<p>实验步骤三</p>
+<p><strong>任务描述：无回显的本地文件读取。（OOB out-of-band 外带参数实体注入）</strong></p>
+<p>   但是，在实际情况中，大多数情况下服务器上的 XML 并不是输出用的，所以就少了输出这一环节，这样的话，即使漏洞存在，我们的payload的也被解析了，但是由于没有输出，我们也不知道解析得到的内容是什么，因此我们想要现实中利用这个漏洞就必须找到一个不依靠其回显的方法——外带数据</p>
+<p>   先看一下漏洞示例：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/7dcb17ef-c08c-45a9-bbb8-ba93a5e804fc.png" alt="img"></p>
+<p>   相较于前面有回显的漏洞代码，我们去掉了内容输出的一部分。这样，用之前的payload就没有作用了：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/c2d92a7e-2922-46ef-996c-a83e5082996d.png" alt="img"></p>
+<p>   Payload的构造：</p>
+<p>   有了前面使用外部DTD文件来拼接内部DTD的参数实体的经验，我们可以知道，通过外部DTD的方式可以将内部参数实体的内容与外部DTD声明的实体的内容拼接起来，那么我们就可以有这样的设想：</p>
+<p>   我们可以在本地做一个端口监听，然后利用payload来从目标主机读取到文件内容后，将文件内容作为url的一部分来请求我们本地监听的端口，这样，我们只需要查看请求的url就可以知道读取到的内容是什么。</p>
+<p>   首先，我们使用ncat监听一个端口：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/f566822d-7958-4286-a26f-058a03b54396.png" alt="img"></p>
+<p>   然后，我们构造payload：</p>
+<p>   我们选择使用外部DTD，在我们自己所能掌控（或是自己搭建）的主机上编写一个dtd文件：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/1e248208-e22e-4699-a596-6d7aa97c64a4.png" alt="img"></p>
+<p>   我们注意到，第一个参数实体的声明中使用到了php的base64编码，这样是为了尽量避免由于文件内容的特殊性，产生xml解析器错误。</p>
+<p>   Payload如下：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/456b6b3b-eb39-452f-8972-8ee7c08504b7.png" alt="img"></p>
+<p>   如图，我们先声明一个外部的DTD引用，然后再xml文档内容中引用外部DTD中的一般实体。</p>
+<p>   开始攻击：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/77c3abc6-803e-48fe-9206-3cd05ad93eff.png" alt="img"></p>
+<p>   然后查看我们的端口监听情况，会发现我们收到了一个连接请求，问号后面的内容就是我们读取到的文件内容经过编码后的字符串：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/691fa5ff-fffa-4f83-847a-b0fa9a56ce94.png" alt="img"></p>
+<p>   Ps：</p>
+<p>   有时候也会出现报错的情况（这是我们在漏洞的代码中没有屏蔽错误和警告），比如我们这里的payload没有选用php的base64编码，这里报错了，但是同时也将所读取的内容爆了出来，只是特殊字符经过了HTML实体编码。</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/d6ccf386-311e-47cf-bb33-1474de7607be.png" alt="img"></p>
+<p>实验步骤四</p>
+<p><strong>任务描述：XXE的其他攻击方式</strong></p>
+<p>\1.  通过XXE漏洞进行内网探测</p>
+<p>   当然进行内网探测我们还需要做一些准备工作，就是获取目标主机在内网中的IP地址，或是内网的网络划分信息，我们可以先利用 file 协议读取我们作为支点服务器的网络配置文件，看一下有没有内网，以及网段大概是什么样子（我以linux 为例），我们可以尝试读取 /etc/network/interfaces 或者 /proc/net/arp 或者 /etc/host 等跟内网配置有关的文件，我们可以通过这些文件的内容来获取更多有关内网的信息。</p>
+<p>   如果实在没有办法获取目标主机的内网配置相关信息，那就花费时间爆破吧。</p>
+<p>   内网存活主机探测：</p>
+<p>   如下，其实payload就是简单的一个外部实体的注入payload：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/f83bf300-9faa-4016-bc97-d52a706413fb.png" alt="img"></p>
+<p>   只不过是将http://后面的部分替换为目标主机：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/59dc2d2f-112d-446a-b82f-071e02944229.png" alt="img"></p>
+<p>   就像这样，如果目标主机对应的端口开启了http服务，或是其他服务，如ftp，也是可以通过http协议来访问，这样根据目标主机的响应内容或者状态码，就可以判断主机的存活与否，根据这个原理，我们在网上找到了相应的py脚本：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/259c1db0-199a-44c1-b53a-f894ffe58164.png" alt="img"></p>
+<p>   运行该脚本就能够找出相应网段是否存在开启http服务的主机。</p>
+<p>\2. 内网主机端口探测：</p>
+<p>   同样的，根据内网存活主机的扫描方式，我们也可以针对某个主机进行端口的扫描：</p>
+<p>   构造payload：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/fe5bffe9-24e0-4640-9a92-1fc9cc22f639.png" alt="img"></p>
+<p> 扫描的大概原理是这样的：</p>
+<p>   比如你扫描一个关闭的端口，在等待了一段时间后，返回协议连接失败且超过了最长时间限制30秒：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/83402012-6a0e-490a-9d00-2a88b8454bfd.png" alt="img"></p>
+<p>   而你扫描开放的端口，也可能是内容错误等其他的警告信息：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/994f9089-8813-49d1-8c07-2513943ee5cc.png" alt="img"></p>
+<p>   Ps：<br>   有时候，端口扫描时判断端口的开放和关闭并不是虚拟机中这个样子，由于环境的不同，版本的不同，你可能会遇到的状况是：关闭的端口在超时之后，返回的是500状态码。</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/2a332634-873b-4c35-a1e2-6f0e79389024.png" alt="img"></p>
+<p>   而开放的端口，返回的是200的状态码，以及一些xml警告信息，有时候还会附带上我们payload中期望输出的字符串。</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/ff60e8d0-0fd1-49bf-9b6e-10aa424cb278.png" alt="img"></p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/631b5aff-664b-433d-8b1a-cfa55cf7a299.png" alt="img"></p>
+<p>   所以，在进行内网探测时，探测结果判定的依据，还需要你自己来判断。你可以是根据返回状态码，也可以是根据返回的警告信息的内容，又或者你也可以尝试根据返回信息的时间长短。（我们在实验中就不写了，当然你也可以想办法，将扫描存活主机与端口同时进行，我觉得这样准确率反而会更高一些，就是速度会很慢）。</p>
+<p>\3. 通过XXE漏洞进行命令执行（非本实验重点）</p>
+<p>   这种情况比较少见，所需的前提条件除了真实存在XXE漏洞外，大概还需要：</p>
+<p>   a. 目标系统为Linux系统</p>
+<p>   b. 目标系统成功安装PHP的expect扩展</p>
+<p>   而且这个漏洞所执行的命令也有限制：</p>
+<p>   a. 可执行的命令与当前用户的权限大小有关</p>
+<p>   b. 命令中不能有空格，否则会报错</p>
+<p>   一般情况下payload（实验环境限制，我没有测试，大家可以在自己的本地搭建环境测试）：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/989eff00-1bed-41d4-a6a7-295abd86a03f.png" alt="img"></p>
+<p>\4.  通过XXE漏洞进行DOS攻击（不要轻易尝试）。</p>
+<p>   Payload如下：</p>
+<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/ec49e4f9-78b2-4b97-a60a-0c98b05df919.png" alt="img"></p>
+<p>   上面的payload就是著名的“billionlaughs”攻击，该代码可以在目标主机的内存中生成十亿个“lol”字符串，从而导致 Dos攻击。它也被称为指数实体扩展攻击，是一种名副其实的XML炸弹。原理为：通过创建一项递归的 XML 定义，构造恶意的XML实体文件耗尽可用内存，如以上代码所示，在XMl中定义了一个实体lol9，它的值包含了十个实体lol8的值，而每个lol8又包含了十个lol7的值…最后产生10亿个“lol”字符串，占用内存约高达3GB。因为许多XML解析器在解析XML文档时倾向于将它的整个结构保留在内存中，解析非常慢，这样，就会占用大量的内存资源，造成了拒绝服务器攻击。</p>
+<p>实验报告要求</p>
+<p>参考实验原理与相关介绍，完成实验任务，并对实验结果进行分析，完成思考题目，总结实验的心得体会，并提出实验的改进意见。</p>
+<p>分析与思考</p>
+<p><strong>XXE的防御：</strong></p>
+<p>方案一：</p>
+<p>过滤用户输入的xml数据，比如尖括号，一些关键字：&lt;!DOCTYPE和&lt;!ENTITY，或者，SYSTEM和PUBLIC等</p>
+<p>方案二：</p>
+<p>禁用外部实体：<br>PHP：</p>
+<p>libxml_disable_entity_loader(true)<em>;</em></p>
+<p>JAVA:</p>
+<p>DocumentBuilderFactorydbf =DocumentBuilderFactory.<strong>new**</strong>Instance**();</p>
+<p>dbf.setExpandEntityReferences(false);</p>
+<p>Python：</p>
+<p><strong>from</strong> lxml import etree</p>
+<p>xmlData= etree.parse(xmlSource,etree.XMLParser(resolve_entities=False))</p>
+<p>另外，可以自己研究一下php的其他协议在xxe注入中的使用，比如，读取本地文件的时候，如果文件过大，可能会报错，那么这个时候就可以使用php的某个协议对文件的内容进行压缩……（自己思考研究）</p>
+<p>配套学习资源</p>
+<p><a href="https://xz.aliyun.com/t/3357">https://xz.aliyun.com/t/3357</a></p>
+<p><a href="https://blog.csdn.net/lileiyuyanqin/article/details/72828922">https://blog.csdn.net/lileiyuyanqin/article/details/72828922</a></p>
+<p><a href="https://www.cnblogs.com/backlion/p/9302528.html">https://www.cnblogs.com/backlion/p/9302528.html</a></p>
+<p><a href="https://www.freebuf.com/column/156863.html">https://www.freebuf.com/column/156863.html</a></p>
+<p><a href="https://www.freebuf.com/column/208904.html">https://www.freebuf.com/column/208904.html</a></p>
+<p><a href="https://www.freebuf.com/articles/web/126788.html">https://www.freebuf.com/articles/web/126788.html</a></p>
+<p><a href="https://www.freebuf.com/vuls/194112.html">https://www.freebuf.com/vuls/194112.html</a></p>
+<p><a href="https://www.cnblogs.com/r00tuser/p/7255939.html">https://www.cnblogs.com/r00tuser/p/7255939.html</a></p>
+<p><a href="https://www.freebuf.com/column/188849.html">https://www.freebuf.com/column/188849.html</a></p>
+]]></content>
+  </entry>
+  <entry>
     <title>sql注入分享小结</title>
     <url>/2020/08/08/sql/</url>
     <content><![CDATA[<h2 id="0x00-SQL注入是什么？"><a href="#0x00-SQL注入是什么？" class="headerlink" title="0x00 SQL注入是什么？"></a>0x00 SQL注入是什么？</h2><p>SQL注入通过输入一些恶意的sql语句来修改后台数据库操作语句，执行注入语句已达到对数据库的增删改查（CRUD），甚至于数据库提权等。所以很多书籍或者机构的课程都会花较大篇幅去讲解SQL注入模块，学习SQL注入原理有利于后期的sqlmap以及waf绕过的学习。</p>
@@ -517,197 +708,6 @@
 <h2 id="0x0C-小结"><a href="#0x0C-小结" class="headerlink" title="0x0C 小结"></a>0x0C 小结</h2><p>在写这个文章得过程中仍然发现自己在很多知识的理解和使用上存在欠缺，希望在日后的生活中能够慢慢练熟，摸透。。。如果文中哪些知识点存在问题，请您指正，不甚感激。。。学安全，菜是原罪，只能好好努力啦。。</p>
 <p>然后我这里有关于sql,xss,dvwa,webug,pikachu,文件上传等一些靶场，还有大佬总结的sql-labs-master的通关宝典，有需要私信我。。。加油啦</p>
 <p>本文作者：hackerqdy， 转载请注明来自<a href="https://www.qdy2020.top/">GitHub</a></p>
-]]></content>
-  </entry>
-  <entry>
-    <title>XML外部实体注入漏洞</title>
-    <url>/2020/08/14/xxe/</url>
-    <content><![CDATA[<ol>
-<li><h5 id="什么是XML"><a href="#什么是XML" class="headerlink" title="什么是XML"></a>什么是XML</h5><p>xml： eXtensibleMarkup Language,可扩展标记语言，使用简单的标记来描述数据。</p>
-<p>xml是一种非常灵活的语言，类似于HTML语言，但是并没有固定的标签，所有的标签都可以自定义，其设计的宗旨是传输数据，而不是像HTML一样显示数据。<a id="more"></a></p>
-</li>
-</ol>
-<p>   xml不会做任何事情，它是被设计用来结构化、存储以及传输信息，也就是xml文件所携带的信息，需要被其他的语言或者程序来解析，才能发挥作用。</p>
-<p>\2.  XML的用处</p>
-<p>   通常，xml被用于信息的记录和传递(比如，数据库的导出导入会很麻烦，但是xml会很方便)，也会被用于充当配置文件。也会被应用于Web 开发的许多方面，常用于简化数据的存储和共享。如：</p>
-<p>   XML 把数据从 HTML 分离，更方便在HTML文档中显示动态数据。</p>
-<p>   XML 简化数据共享，XML数据以纯文本格式进行存储，因此提供了一种独立于软件和硬件的数据存储方法。这让创建不同应用程序可以共享的数据变得更加容易。</p>
-<p>   XML 简化数据传输，由于可以通过各种不兼容的应用程序来读取数据，以 XML 交换数据降低了不兼容系统之间交换书据的复杂性。</p>
-<p>   XML 简化平台变更，使用XML存储一些不兼容的数据，可以在系统或软件升级，转换大量的数据时，避免数据的丢失。</p>
-<p>   XML 使您的数据更有用，XML可以使不同的应用程序都能够访问您的数据，使得数据的用途更广。</p>
-<p>   XML 用于创建新的互联网语言，如XHTML、WSDL、WAP 和 WML、RSS 、RDF 和 OWL等</p>
-<p>\3.  什么是XML注入</p>
-<p>   XML与HTML一样，也存在注入漏洞。比如：一个 web 应用，在进行用户注册时，选择以 xml 来存储数据到 xmldb 数据库中，当用户填写用户名，密码和邮箱时，后台存储的文件格式及内容如下：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/7f2cef17-3494-4a3a-828c-64159c035811.png" alt="img"></p>
-<p>   那么攻击者就可以在注册的时候构造恶意的数据，假设他在用户名与密码的输入框中输入正常的文本，在最后的邮箱输入框中输入如下内容：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/08894e79-3fec-4d93-9e18-9a0c290dd8e3.png" alt="img"></p>
-<p>   那么就会多注册一个名为admin的用户。</p>
-<p>   综合上面的小例子，我们可以知道,能够进行XML注入攻击的前提是，用户能够控制数据的输入，程序没有对输入的内容进行过滤且拼接了数据。那么相应的，破坏掉其中一个前提就可以进行防御了，既然我们无法限制用户的输入，那么就可以对数据进行过滤，将XML语言本身的“保留字符”进行过滤或者转义即可。</p>
-<p>\4.  什么是XXE注入漏洞：</p>
-<p>   XXE注入也是XML注入的一部分，但相较于普通的XML注入，XXE注入的攻击面更广，危害更大。</p>
-<p>   XXE注入(XML External Entity Injection) 全称为 XML 外部实体注入，从名字就能看出来，所注入的对象就是我们实验任务一中提到的重点： XML外部实体。当遇见能够解析XML内容的页面时，如果能注入外部实体并且成功解析的话，这就会大大拓宽我们 XML 注入的攻击面。</p>
-<p>   XXE的攻击形式主要分为：带内数据实体注入、基于错误的实体注入和带外数据实体注入</p>
-<p>   带内数据实体注入：in-band ,XML解析后的数据会直接显示在屏幕上</p>
-<p>   基于错误：error-based，解析结果只有一大堆的错误</p>
-<p>   带外数据：out-of-band，也叫XXE盲注，注入的XML解析后无任何输出响应，必须执行一些带外请求把数据提取出来。</p>
-<p>\5.  XXE注入能做什么：</p>
-<p>   a. 任意文件读（<strong>本实验重点</strong>）</p>
-<p>   b. SSRF，服务端请求伪造，借助漏洞实现内网探测，</p>
-<p>   c. DOS攻击</p>
-<p>   d. 远程命令执行</p>
-<p>\6.  PHP的XXE注入产生的条件：</p>
-<p>   a. Libxml的版本尽可能的低，libxml是PHP的xml解析库，因为从2.8.0版本开始，libxml默认是不加载外部实体的，如果要使用较高版本的libxml的话，需要在编写代码的时候对参数做设置。</p>
-<p>   b. 目标主机没有禁用外部实体的引用。</p>
-<p>   c. 用户可以控制xml的输入内容</p>
-<p>实验目的</p>
-<p>XML注入是web应用中常见的一种漏洞，尤其是XXE注入（XML外部实体注入）漏洞所造成的危害也是很严重的。通过本实验，了解在PHP的web应用程序中，XXE注入漏洞形成的原理以及利用形式、利用方法等。</p>
-<p>实验环境</p>
-<p>服务器：Windows 10 ，IP地址：10.1.1.123</p>
-<p>辅助工具：phpstudy</p>
-<p>实验步骤一</p>
-<p><strong>任务描述：学习XML基础知识。</strong></p>
-<p>1、一个XML示例：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;utf-8&quot;?&gt;</span><br><span class="line">&lt;!--这里是注释--&gt;</span><br><span class="line">&lt;books&gt;</span><br><span class="line">    &lt;book id&#x3D;&quot;b01&quot;&gt;</span><br><span class="line">        &lt;name&gt;Python黑客编程从入门到入狱&lt;&#x2F;name&gt;</span><br><span class="line">        &lt;author&gt;张三&lt;&#x2F;author&gt;</span><br><span class="line">        &lt;price&gt;$20.00&lt;&#x2F;price&gt;</span><br><span class="line">    &lt;&#x2F;book&gt;</span><br><span class="line">&lt;&#x2F;books&gt;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>      如上代码，第一行是XML文档的声明，由“<?xml”开头，以“?>”结尾，其中的内容是对本xml文档所使用的版本 “version”和编码“encoding”的声明，version一般情况下都是1.0，因为目前为止，xml只有这一个版本。      第二行是注释，不多做解释。      从第三行开始，就是XML文档的主要内容了，如代码中所示的“<books>”，是本文档的根元素，“<book>”是“<books>”的子元素，而“<name>、<author>、<price>”也都是子元素，但是是“<book>”的子元素。      那么我们可以将这个XML文档，视为是一个描述图书的文档，它所描述的内容，包括了图书的名字、作者和价格，如果使用程序对这个文档进行解析后，那么这些信息就可以更好的显示在web页面或者是应用程序中，方便用户查看。2、XML的格式      a. 声明信息，用于描述xml的版本及编码格式。<?xml version="1.0" encoding="utf-8" ?>      b. xml有且仅有一个根元素（可以理解为顶级的元素、没有被其他元素包起来的元素）。个人理解：像是数据库的表名      c. xml中大小写敏感      d. 标签是成对出现的，所有元素都必须有一个关闭标签，而且要正确嵌套。      e. 属性值要使用双引号      f. 注释的写法。<!--这是注释 -->      g. 一个格式良好的xml文件<?xml version="1.0" encoding="utf-8"?> <!--这里是注释--> <books>     <book id="b01">         <name>Python黑客编程从入门到入狱</name>         <author>张三</author>         <price>$20.00</price>     </book> </books>      h. XML并不是让用户直接打开的，而是让别的语言来从文件中读取信息的。至于为什么可以直接用浏览器浏览，只是浏览器可以识别而已。3、 XML的属性      虽然XML像HTML一样，也有属性，但是一般不推荐使用属性，如果某个信息看起来很像是数据，那么最好是使用元素来表示它，而不是属性。4、 XML验证      拥有正确语法的 XML 被称为”形式良好”的 XML。而判断XML的语法是否合法，叫做XML验证，是通过 DTD进行验证的。      DTD：Document TypeDefinition 文档类型定义。用于约束xml的文档格式，保证xml是一个有效的xml，DTD分为内部和外部两种。DTD定义在xml文件中视为内部DTD；DTD定义在外部的dtd文件中，视为外部DTD。      说的简单一点，DTD就是对当前的XML文档做一个约束，DTD中定义了这个文档中的根元素是什么，有几个子元素，每个子元素能出现几次，哪些元素有属性，属性的类型是什么，属性的默认值是什么等等，如果后面的XML内容中，与DTD中的定义不符，如元素个数不符、元素名称大小写不符等，那么XML文件解析时就会报错。1）内部DTD的使用：      内部DTD的定义<!DOCTYPE 根元素 [元素声明]>      元素声明语法[ <!ELEMENT 根元素 (子元素)> <!ELEMENT 根元素的子元素 (子元素的子元素，子元素的子元素)> <!ELEMENT 子元素 (数据类型)> <!ELEMENT 子元素 (数据类型)> ]      元素声明中的数量词”+” 表示出现一次或者多次 “?”表示出现0次或多次 “*”表示出现任意次。      属性声明语法<!ATTLIST 元素名称 属性名称  属性类型 默认值>      示例：<?xml version="1.0" encoding="utf-8"?> <!--这里是注释--> <!DOCTYPE books [     <!ELEMENT books (book+)>     <!ELEMENT book (name,author,price)>     <!ATTLIST book id CDATA #REQUIRED>     <!ELEMENT name (#PCDATA)>     <!ELEMENT author (#PCDATA)>     <!ELEMENT price (#PCDATA)>      ]&gt; <books>     <book id="b01">         <name>Python黑客编程从入门到入狱</name>         <author>张三</author>         <price>$20.00</price>     </book> </books>      如上，就是一个内部DTD的引用示例，在DTD定义中，要求根元素books的子元素book出现一次及以上，子元素book又有三个子元素，分别为name，author和price，然后声明了元素book的id属性，其类型是CDATA，并且是必须的（#REQUIRED），最后定义了book的三个子元素的数据类型为#PCDATA，这表示这三个元素标签中的内容必须是文本，并能再出现子标签。2）外部DTD的使用：      首先需要创建一个外部的dtd文件。内容中不需要包括&lt;!DOCTYPE…&gt;，直接&lt;!ELEMENT…&gt;，如下所示：<?xml version="1.0" encoding="utf-8"?> <!ELEMENT books (book+)> <!ELEMENT book (name,author,price)> <!ATTLIST book id CDATA #REQUIRED> <!ELEMENT name (#PCDATA)> <!ELEMENT author (#PCDATA)> <!ELEMENT price (#PCDATA)>      然后在XML文档中引入外部的DTD：<!DOCTYPEbooks SYSTEM "xxx.dtd">      注意外部实体引用时的关键字“SYSTEM”，同时也可以使用“PUBLIC”这个关键字，这两者的区别在于，SYSTEM表示私有的DTD，PUBLIC表示共有的DTD。5、DTD实体（重点学习）      首先，什么是DTD实体，简单点理解，实体就像是变量，可以用于存储数据，以便后续的使用。但它的功能又不仅仅是存储，比如外部实体，除了可以存储数据，还可以从远程文件或远程网络中读取内容或调用数据。至于什么是外部实体，别着急，接着往后看。      从实体被定义的位置来看，实体可以分为内部实体和外部实体，就像内部DTD和外部DTD一样，内部实体，就是在XML文档内部的DTD进行定义的实体，外部实体就是定义在外部DTD文件中然后被引用到当前XML中的实体。1）内部实体声明：      声明语法：<!ENTITY 实体名称 "实体的值">      一个实体的引用，由三部分构成:&amp;符号, 实体名称, 分号。      内部实体引用示例：<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE books [     <!ENTITY test "Hello World"> ]&gt;  <books>&test;</books>       PHP解析示例代码：            使用浏览器进行访问，并将xml代码作为参数传入，可以不复制xml声明，记得要将引用实体时的“&amp;”手动编码为“&amp;”（因为我们这里使用的是GET传参的方式，所以传入的内容会被进行URL编码，但是&amp;在URL中被认为是两个参数的分隔符，所以如果我们不对其进行URL编码转换，浏览器会把它当作参数的分隔符来处理）：      2）外部实体声明：      声明语法：<!ENTITY  实体名称 SYSTEM "URI/URL" >      声明一个外部实体的关键在于“SYSTEM”这个关键字。SYSTEM在此意图让xml解析器知道，现在声明的是一个外部实体，需要从后面的外部资源中获取内容并存储在内部实体，如果后面的外部资源的语法，存在特殊符号，那么xml解析器会报错。      外部实体引用可支持http，file等协议，不同的语言支持的协议不同，但存在一些通用的协议，比如http、file、ftp等，具体内容如下所示：                  外部实体引用示例：<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE books [     <!ENTITY xxe SYSTEM "http://localhost/xmltest.txt"> ]&gt;  <books>&xxe;</books>      依旧将代码作为参数传入：            另外，从实体的引用方式来区分，实体又可以分为：一般实体、参数实体、预定义实体。      一般实体：General Entities，就是我们上面的示例中的实体，使用&amp;进行引用      预定义实体：PredefinedEntities，就是xml本身对一些特殊字符进行了预定义，方便用户直接引用，比如小于号，如果直接在xml文档中使用小于号，会被xml解析器视为标签，从而引起解析错误。那么此时就需要调用小于号所对应的预定义实体来引用：&amp;#x3C。      参数实体：Parameter Entities，这也是XXE学习中的重点，在XXE利用中经常被使用。3）参数实体      参数实体声明：内部：<!ENTITY % 实体名称 "实体值"> 外部：<!ENTITY % 实体名称 SYSTEM  "URI">      参数实体应注意以下几点：      (1)使用 % 实体名(这里面空格不能少) 在 DTD 中定义，并且只能在 DTD 中使用 “%实体名;” 引用      (2)只有在 DTD 文件中，参数实体的声明才能引用其他实体      (3)和通用实体一样，参数实体也可以外部引用      简单理解呢，就是参数实体不能像普通实体那样在xml文档内容中进行引用，它的引用范围只在当前xml文件的DTD声明中，或者是当前的DTD文件中。      参数实体引用示例：<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE books [     <!ENTITY % xxe "hello">     %xxe;  ]&gt;  <books></books>      那么它的引用效果是什么样的呢？我们拿下面这示例讲解一下：            像上图这样一个xml文档，我们定义了一个参数实体为test，他的值比较特殊，是一句普通实体的声明，然后是使用“%test”进行引用，最后在xml文档内容中使用“&amp;hello”来引用定义的普通实体hello。      那么此文档中实体的定义其实就成为了下图所示的：            所以这个时候，我们直接使用浏览器查看的时候，会是下面的显示：      </p>
-<p>实验步骤二</p>
-<p><strong>任务描述：有回显的本地文件读取。</strong></p>
-<p>   漏洞示例代码：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/1eee747b-b70b-46e5-98d7-5980ae71014f.png" alt="img"></p>
-<p>   测试payload：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/5ef5ec0a-2adb-4a9f-8af6-b3131204bafe.png" alt="img"></p>
-<p>   在浏览器中设置代理，打开burpsuite访问存在漏洞的页面：“xxetest.php”，并抓包，然后发送到Repeater中，构造请求包：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/62d3bd12-eefa-4b0c-9157-2e3e21f9c8a9.png" alt="img"></p>
-<p>   这样我们就读取到了windows系统的system.ini的文件内容。</p>
-<p>   但是这样也不代表这个payload的就适用于任何情况，比如我们更换一个读取的文件xmltest2.txt，内容是：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/bb5ba17f-5f4c-44ed-8c3d-12ca72690c4b.png" alt="img"></p>
-<p>   我们再使用刚才的payload测试：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/48198e19-ef71-45f6-9026-dc63e706473b.png" alt="img"></p>
-<p>   这个时候就会如上图一样，报很多错误，主要是因为我们要读取的文件内容中存在很多的特殊字符：大于号、小于号等，我们在前面的XML基础巩固中也提到过，当xml的标签内还存在小于号、大于号等特殊字符时，尤其是小于号，会被XML解析器误认为是另一个标签的开始，这样就会造成解析的错误。所以我们的问题是：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/52bacae0-48d7-486d-a49c-09df72c68213.png" alt="img"></p>
-<p>   所以我们就要想办法绕过。这个时候我们就需要了解一下XML CDATA了，我们先看一下w3school中对他的描述：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/09be709a-34bd-4832-a7f9-3f94abd208e9.png" alt="img"></p>
-<p>   其实只用看一个开始，我们就大概知道CDATA的作用了，它可以使得使用其中的数据内容不会被xml解析器解析。然后我们再看其使用方式：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/7c01d25c-9bf6-42f2-b99f-31c4503bbe41.png" alt="img"></p>
-<p>   从w3school给出的例子，我们也大概知道了CDATA的使用方式，但是其还需要注意几点：</p>
-<p>   a. CDATA 部分不能包含字符串 “]]&gt;”。也不允许嵌套的 CDATA 部分，这样会导致异常的闭合，从而使解析器报错。</p>
-<p>   b. 标记 CDATA 部分结尾的 “]]&gt;” 不能包含空格或换行。</p>
-<p>   那么了解了这些，我们就可以尝试使用CDATA再次去读取目标文件的内容，我们首先需要把要读取的到的内容放在CDATA中，但是CDATA并没有提供拼接的方法，所以我们暂且使用普通实体进行拼接尝试（注意是尝试）：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/55dfd86c-a46f-4b65-a34e-dc60e2e1067c.png" alt="img"></p>
-<p>   我们尝试直接使用实体来进行拼接，但是测试失败：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/eba2fc1b-faba-4170-a75b-3eeb6f314848.png" alt="img"></p>
-<p>   这说明我们的拼接方式不可行，我们现在使用的是一般实体，我们在前面的xml基础知识中介绍过了，一般实体的引用是在xml文档内容中，既然在xml文档内容中拼接不可行，那再dtd中拼接可行吗？我们再次进行尝试，既然再dtd中拼接，那就需要用到参数实体了。</p>
-<p>   我们再次尝试构造payload：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/c954ed86-0f20-455b-952d-d3effc5315cb.png" alt="img"></p>
-<p>   理论上，我们完美地将这几个参数实体拼接了起来，并将值赋给了一般实体all，但是遗憾的是，我们的payload还是报错了：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/697e6d68-cfc4-409e-ad82-c3dc3aa1d976.png" alt="img"></p>
-<p>   那么这又是为什么呢？根据XML规范所描述：“在DTD内部子集中的参数实体调用，不能混掺到标记语言中”，这是什么意思呢？就是不能在实际的标记语言中来调用参数实体，像我们这样，就是在标记语言中进行调用：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/34c0d65e-ffa5-4fed-8683-3cd86c03e5dd.png" alt="img"></p>
-<p>   但可以在同级别中被当作标记语言调用，就像是参数实体的引用，就是将调用当成了一个标记语言，像这样：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/b774add3-adcb-40f6-aaca-3ff855c40b12.png" alt="img"></p>
-<p>   也就是我们所构造的payload这种使用方式，不能在内部DTD中被这样使用，但是幸运的是，XML规范还声明了一点：“外部参数实体不受此限制”，这就告诉我们可以使用外部的DTD来构造payload，将我们的CDATA内容拼接起来：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/6a2604c2-cbbe-4f48-95e5-166e1f55a265.png" alt="img"></p>
-<p>   DTD文件的内容：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/7395ec9a-0c90-4e4e-8438-21f6b2fdcf24.png" alt="img"></p>
-<p>   我们再次进行攻击尝试，成功读取到文件内容：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/26fb0f38-26b6-4c06-927a-408344b98a45.png" alt="img"></p>
-<p>   Ps：</p>
-<p>   由于环境资源的关系，我们在进行攻击时，所使用的外部dtd文件，是本地环境的。但是在实际的攻击情况下，这个DTD文件应该是我们自己所掌握的主机的DTD文件，文件的内容是受我们所控的。</p>
-<p>实验步骤三</p>
-<p><strong>任务描述：无回显的本地文件读取。（OOB out-of-band 外带参数实体注入）</strong></p>
-<p>   但是，在实际情况中，大多数情况下服务器上的 XML 并不是输出用的，所以就少了输出这一环节，这样的话，即使漏洞存在，我们的payload的也被解析了，但是由于没有输出，我们也不知道解析得到的内容是什么，因此我们想要现实中利用这个漏洞就必须找到一个不依靠其回显的方法——外带数据</p>
-<p>   先看一下漏洞示例：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/7dcb17ef-c08c-45a9-bbb8-ba93a5e804fc.png" alt="img"></p>
-<p>   相较于前面有回显的漏洞代码，我们去掉了内容输出的一部分。这样，用之前的payload就没有作用了：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/c2d92a7e-2922-46ef-996c-a83e5082996d.png" alt="img"></p>
-<p>   Payload的构造：</p>
-<p>   有了前面使用外部DTD文件来拼接内部DTD的参数实体的经验，我们可以知道，通过外部DTD的方式可以将内部参数实体的内容与外部DTD声明的实体的内容拼接起来，那么我们就可以有这样的设想：</p>
-<p>   我们可以在本地做一个端口监听，然后利用payload来从目标主机读取到文件内容后，将文件内容作为url的一部分来请求我们本地监听的端口，这样，我们只需要查看请求的url就可以知道读取到的内容是什么。</p>
-<p>   首先，我们使用ncat监听一个端口：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/f566822d-7958-4286-a26f-058a03b54396.png" alt="img"></p>
-<p>   然后，我们构造payload：</p>
-<p>   我们选择使用外部DTD，在我们自己所能掌控（或是自己搭建）的主机上编写一个dtd文件：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/1e248208-e22e-4699-a596-6d7aa97c64a4.png" alt="img"></p>
-<p>   我们注意到，第一个参数实体的声明中使用到了php的base64编码，这样是为了尽量避免由于文件内容的特殊性，产生xml解析器错误。</p>
-<p>   Payload如下：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/456b6b3b-eb39-452f-8972-8ee7c08504b7.png" alt="img"></p>
-<p>   如图，我们先声明一个外部的DTD引用，然后再xml文档内容中引用外部DTD中的一般实体。</p>
-<p>   开始攻击：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/77c3abc6-803e-48fe-9206-3cd05ad93eff.png" alt="img"></p>
-<p>   然后查看我们的端口监听情况，会发现我们收到了一个连接请求，问号后面的内容就是我们读取到的文件内容经过编码后的字符串：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/691fa5ff-fffa-4f83-847a-b0fa9a56ce94.png" alt="img"></p>
-<p>   Ps：</p>
-<p>   有时候也会出现报错的情况（这是我们在漏洞的代码中没有屏蔽错误和警告），比如我们这里的payload没有选用php的base64编码，这里报错了，但是同时也将所读取的内容爆了出来，只是特殊字符经过了HTML实体编码。</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/d6ccf386-311e-47cf-bb33-1474de7607be.png" alt="img"></p>
-<p>实验步骤四</p>
-<p><strong>任务描述：XXE的其他攻击方式</strong></p>
-<p>\1.  通过XXE漏洞进行内网探测</p>
-<p>   当然进行内网探测我们还需要做一些准备工作，就是获取目标主机在内网中的IP地址，或是内网的网络划分信息，我们可以先利用 file 协议读取我们作为支点服务器的网络配置文件，看一下有没有内网，以及网段大概是什么样子（我以linux 为例），我们可以尝试读取 /etc/network/interfaces 或者 /proc/net/arp 或者 /etc/host 等跟内网配置有关的文件，我们可以通过这些文件的内容来获取更多有关内网的信息。</p>
-<p>   如果实在没有办法获取目标主机的内网配置相关信息，那就花费时间爆破吧。</p>
-<p>   内网存活主机探测：</p>
-<p>   如下，其实payload就是简单的一个外部实体的注入payload：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/f83bf300-9faa-4016-bc97-d52a706413fb.png" alt="img"></p>
-<p>   只不过是将http://后面的部分替换为目标主机：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/59dc2d2f-112d-446a-b82f-071e02944229.png" alt="img"></p>
-<p>   就像这样，如果目标主机对应的端口开启了http服务，或是其他服务，如ftp，也是可以通过http协议来访问，这样根据目标主机的响应内容或者状态码，就可以判断主机的存活与否，根据这个原理，我们在网上找到了相应的py脚本：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/259c1db0-199a-44c1-b53a-f894ffe58164.png" alt="img"></p>
-<p>   运行该脚本就能够找出相应网段是否存在开启http服务的主机。</p>
-<p>\2. 内网主机端口探测：</p>
-<p>   同样的，根据内网存活主机的扫描方式，我们也可以针对某个主机进行端口的扫描：</p>
-<p>   构造payload：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/fe5bffe9-24e0-4640-9a92-1fc9cc22f639.png" alt="img"></p>
-<p> 扫描的大概原理是这样的：</p>
-<p>   比如你扫描一个关闭的端口，在等待了一段时间后，返回协议连接失败且超过了最长时间限制30秒：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/83402012-6a0e-490a-9d00-2a88b8454bfd.png" alt="img"></p>
-<p>   而你扫描开放的端口，也可能是内容错误等其他的警告信息：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/994f9089-8813-49d1-8c07-2513943ee5cc.png" alt="img"></p>
-<p>   Ps：<br>   有时候，端口扫描时判断端口的开放和关闭并不是虚拟机中这个样子，由于环境的不同，版本的不同，你可能会遇到的状况是：关闭的端口在超时之后，返回的是500状态码。</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/2a332634-873b-4c35-a1e2-6f0e79389024.png" alt="img"></p>
-<p>   而开放的端口，返回的是200的状态码，以及一些xml警告信息，有时候还会附带上我们payload中期望输出的字符串。</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/ff60e8d0-0fd1-49bf-9b6e-10aa424cb278.png" alt="img"></p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/631b5aff-664b-433d-8b1a-cfa55cf7a299.png" alt="img"></p>
-<p>   所以，在进行内网探测时，探测结果判定的依据，还需要你自己来判断。你可以是根据返回状态码，也可以是根据返回的警告信息的内容，又或者你也可以尝试根据返回信息的时间长短。（我们在实验中就不写了，当然你也可以想办法，将扫描存活主机与端口同时进行，我觉得这样准确率反而会更高一些，就是速度会很慢）。</p>
-<p>\3. 通过XXE漏洞进行命令执行（非本实验重点）</p>
-<p>   这种情况比较少见，所需的前提条件除了真实存在XXE漏洞外，大概还需要：</p>
-<p>   a. 目标系统为Linux系统</p>
-<p>   b. 目标系统成功安装PHP的expect扩展</p>
-<p>   而且这个漏洞所执行的命令也有限制：</p>
-<p>   a. 可执行的命令与当前用户的权限大小有关</p>
-<p>   b. 命令中不能有空格，否则会报错</p>
-<p>   一般情况下payload（实验环境限制，我没有测试，大家可以在自己的本地搭建环境测试）：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/989eff00-1bed-41d4-a6a7-295abd86a03f.png" alt="img"></p>
-<p>\4.  通过XXE漏洞进行DOS攻击（不要轻易尝试）。</p>
-<p>   Payload如下：</p>
-<p>   <img src="https://www.hetianlab.com/pages/registerUser/headImg.action?guideImg=/ec49e4f9-78b2-4b97-a60a-0c98b05df919.png" alt="img"></p>
-<p>   上面的payload就是著名的“billionlaughs”攻击，该代码可以在目标主机的内存中生成十亿个“lol”字符串，从而导致 Dos攻击。它也被称为指数实体扩展攻击，是一种名副其实的XML炸弹。原理为：通过创建一项递归的 XML 定义，构造恶意的XML实体文件耗尽可用内存，如以上代码所示，在XMl中定义了一个实体lol9，它的值包含了十个实体lol8的值，而每个lol8又包含了十个lol7的值…最后产生10亿个“lol”字符串，占用内存约高达3GB。因为许多XML解析器在解析XML文档时倾向于将它的整个结构保留在内存中，解析非常慢，这样，就会占用大量的内存资源，造成了拒绝服务器攻击。</p>
-<p>实验报告要求</p>
-<p>参考实验原理与相关介绍，完成实验任务，并对实验结果进行分析，完成思考题目，总结实验的心得体会，并提出实验的改进意见。</p>
-<p>分析与思考</p>
-<p><strong>XXE的防御：</strong></p>
-<p>方案一：</p>
-<p>过滤用户输入的xml数据，比如尖括号，一些关键字：&lt;!DOCTYPE和&lt;!ENTITY，或者，SYSTEM和PUBLIC等</p>
-<p>方案二：</p>
-<p>禁用外部实体：<br>PHP：</p>
-<p>libxml_disable_entity_loader(true)<em>;</em></p>
-<p>JAVA:</p>
-<p>DocumentBuilderFactorydbf =DocumentBuilderFactory.<strong>new**</strong>Instance**();</p>
-<p>dbf.setExpandEntityReferences(false);</p>
-<p>Python：</p>
-<p><strong>from</strong> lxml import etree</p>
-<p>xmlData= etree.parse(xmlSource,etree.XMLParser(resolve_entities=False))</p>
-<p>另外，可以自己研究一下php的其他协议在xxe注入中的使用，比如，读取本地文件的时候，如果文件过大，可能会报错，那么这个时候就可以使用php的某个协议对文件的内容进行压缩……（自己思考研究）</p>
-<p>配套学习资源</p>
-<p><a href="https://xz.aliyun.com/t/3357">https://xz.aliyun.com/t/3357</a></p>
-<p><a href="https://blog.csdn.net/lileiyuyanqin/article/details/72828922">https://blog.csdn.net/lileiyuyanqin/article/details/72828922</a></p>
-<p><a href="https://www.cnblogs.com/backlion/p/9302528.html">https://www.cnblogs.com/backlion/p/9302528.html</a></p>
-<p><a href="https://www.freebuf.com/column/156863.html">https://www.freebuf.com/column/156863.html</a></p>
-<p><a href="https://www.freebuf.com/column/208904.html">https://www.freebuf.com/column/208904.html</a></p>
-<p><a href="https://www.freebuf.com/articles/web/126788.html">https://www.freebuf.com/articles/web/126788.html</a></p>
-<p><a href="https://www.freebuf.com/vuls/194112.html">https://www.freebuf.com/vuls/194112.html</a></p>
-<p><a href="https://www.cnblogs.com/r00tuser/p/7255939.html">https://www.cnblogs.com/r00tuser/p/7255939.html</a></p>
-<p><a href="https://www.freebuf.com/column/188849.html">https://www.freebuf.com/column/188849.html</a></p>
 ]]></content>
   </entry>
   <entry>
